@@ -10,6 +10,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -21,7 +22,11 @@ async def add_process_time_header(request, call_next):
     return response
 
 
-@app.get('/api/credito')
+@app.get("/")
+def welcome():
+    return "CygnusSOAP is running 0.0.1"
+
+@app.post('/api/credito')
 async def root(request: Request):
 
     body = await request.body()

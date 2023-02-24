@@ -40,6 +40,12 @@ def serialize_respuesta_atr(respuesta_atr):
     }
 
 def serialize_response(response):
+    """
+    It serializes the response object into a dictionary.
+    
+    :param response: The response object from the SOAP call
+    :return: A dictionary with the following keys:
+    """
     serialized_atr_list = []
     if response.R_Liquidacion is not None and response.R_Liquidacion.LiquidacionAtr is not None:
         for atr in response.R_Liquidacion.LiquidacionAtr:

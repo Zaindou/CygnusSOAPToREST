@@ -2,12 +2,11 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from services import soap_cygnus, get_info_credito
-from utils import decode_token, process_credit_info, SECRET_KEY, USERNAME, PASSWORD
+from services import soap_cygnus
+from utils import decode_token, process_credit_info, cache, SECRET_KEY, USERNAME, PASSWORD
 import json
 import jwt
 import uvicorn
-
 
 app = FastAPI()
 
@@ -48,7 +47,11 @@ async def get_token(credentials: HTTPBasicCredentials = Depends(security)):
 @app.get('/cygnus/info_general/{id}')
 async def get_planpagosandinfo(id, username: str = Depends(decode_token)):
 
-    info_credito = process_credit_info(id)
+    if id in cache:
+        info_credito = cache[id]
+    else:
+        info_credito = process_credit_info(id)
+        cache[id] = info_credito
 
     identificacion = info_credito["documentoCliente"]
     num_radicado = id

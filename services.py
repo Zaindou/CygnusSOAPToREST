@@ -4,9 +4,11 @@ from fastapi.responses import JSONResponse
 from serializer import serialize_response
 from zeep import Client
 from zeep.transports import Transport
+from cachetools import TTLCache
 import json
 import os
 import requests
+
 
 load_dotenv()
 

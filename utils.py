@@ -2,8 +2,10 @@ from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-import os
+from services import get_info_credito
+import json
 import jwt
+import os
 
 load_dotenv()
 
@@ -37,3 +39,14 @@ async def decode_token(token: str = Depends(auth)):
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+def process_credit_info(id):
+    """
+    It takes a credit id, gets the credit info from the database, and returns the credit info as a JSON
+    object
+    
+    :param id: The id of the credit
+    :return: A JSON object
+    """
+    info_credito = get_info_credito(id)[0]
+    return json.loads(json.dumps(info_credito))

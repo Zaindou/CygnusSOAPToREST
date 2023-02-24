@@ -1,11 +1,17 @@
-from fastapi import FastAPI, Request, APIRouter
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from services import soap_cygnus
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from services import soap_cygnus, get_info_credito
+from utils import decode_token, SECRET_KEY, USERNAME, PASSWORD
 import json
+import jwt
 import uvicorn
 
+
 app = FastAPI()
+
+security = HTTPBasic()
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,6 +20,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.middleware("http")
 async def add_process_time_header(request, call_next):
@@ -24,25 +31,42 @@ async def add_process_time_header(request, call_next):
 
 @app.get("/")
 def welcome():
-    return "CygnusSOAP is running 0.0.1"
+    return "CygnusSOAP is running 1.0"
 
-@app.post('/api/credito')
-async def root(request: Request):
 
-    body = await request.body()
+@app.post('/getToken')
+async def get_token(credentials: HTTPBasicCredentials = Depends(security)):
+    if credentials.username != USERNAME or credentials.password != PASSWORD:
+        raise HTTPException(
+            status_code=401, detail='Invalid username or password')
 
-    data = json.loads(body.decode("utf-8"))
-    
-    identificacion = data["identificacion"]
-    num_radicado = data["num_radicado"]
-    
+    acces_token = jwt.encode(
+        {"sub": credentials.username}, SECRET_KEY, algorithm="HS256")
+    return {"access_token": acces_token, "token_type": "bearer"}
+
+
+@app.get('/cygnus/info_general/{id}')
+async def get_planpagosandinfo(id, username: str = Depends(decode_token)):
+
+    info_credito = get_info_credito(id)
+    info_credito = info_credito[0]
+    info_credito = json.dumps(info_credito)
+    info_credito = json.loads(info_credito)
+
+    identificacion = info_credito["documentoCliente"]
+    num_radicado = id
+
     response_json = soap_cygnus(identificacion, num_radicado)
 
-    parsed_response = json.loads(response_json)
+    plan_pagos = json.loads(response_json)
 
-    return JSONResponse(parsed_response)
+    response_data = {
+        "info_credito": info_credito,
+        "plan_pagos": plan_pagos
+    }
 
+    return JSONResponse(response_data)
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8000, log_level="info")
+    uvicorn.run("main:app", port=5000, log_level="info")

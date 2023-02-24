@@ -41,9 +41,10 @@ def serialize_respuesta_atr(respuesta_atr):
 
 def serialize_response(response):
     serialized_atr_list = []
-    for atr in response.R_Liquidacion.LiquidacionAtr:
-        serialized_atr_list.append(serialize_respuesta_atr(atr))
-    
+    if response.R_Liquidacion is not None and response.R_Liquidacion.LiquidacionAtr is not None:
+        for atr in response.R_Liquidacion.LiquidacionAtr:
+            serialized_atr_list.append(serialize_respuesta_atr(atr))
+
     return {
         'R_s_mensaje': response.R_s_mensaje,
         'R_Val_cuota': response.R_Val_cuota,
